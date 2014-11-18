@@ -2,6 +2,7 @@ package id3
 
 import (
 	"bytes"
+	"errors"
 	"encoding/binary"
 	"fmt"
 	"io"
@@ -148,6 +149,11 @@ func (p PictureType) String() string {
 
 // TODO: HeaderFlags.String()
 // TODO: FrameFlags.String()
+
+var (
+	ErrNoExtendedHeader = errors.New("id3: no support for extended headers")
+	ErrNoUnsynchronizedTag = errors.New("id3: no support for unsynchronized tags")
+)
 
 func (err notATagHeader) Error() string {
 	return fmt.Sprintf("Not an ID3v2 header: %v", err.Magic)
@@ -447,11 +453,11 @@ func Parse(r io.Reader) (*Tag, error) {
 
 	// FIXME consider moving this to ParseHeader
 	if header.Flags.ExtendedHeader() {
-		panic("not implemented: cannot parse extended header")
+		return nil, ErrNoExtendedHeader
 	}
 
 	if header.Flags.Unsynchronisation() {
-		panic("not implemented: cannot parse unsynchronised tag")
+		return nil, ErrNoUnsynchronizedTag
 	}
 
 	tagReader := io.LimitReader(r, int64(header.Size)+tagHeaderSize)
